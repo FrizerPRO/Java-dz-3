@@ -23,6 +23,7 @@ public class HelloWorldAgent extends Agent {
         System.out.println("My GUID is " + getAID().getName());
         System.out.println("My addresses are " + String.join(",", getAID().getAddressesArray()));
 
+
         findTestAgents();
     }
 

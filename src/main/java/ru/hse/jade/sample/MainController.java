@@ -8,6 +8,8 @@ import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
 import org.reflections.Reflections;
+import ru.hse.jade.sample.agents.TestAgent;
+import ru.hse.jade.sample.annotation_setup.SetAnnotationNumber;
 import ru.hse.jade.sample.configuration.JadeAgent;
 
 import java.text.MessageFormat;
@@ -25,16 +27,18 @@ class MainController {
         p.setParameter(Profile.MAIN_HOST, "localhost");
         p.setParameter(Profile.MAIN_PORT, "8080");
         p.setParameter(Profile.GUI, "true");
-
         containerController = rt.createMainContainer(p);
     }
-
+    void configureAgentClasses(){
+        new TestAgent().setNumber(2);
+    }
     void initAgents() {
         initAgents(MainController.class.getPackageName());
     }
 
     void initAgents(String basePackage) {
         final Reflections reflections = new Reflections(basePackage);
+        configureAgentClasses();
 
         final Set<Class<?>> allClasses = reflections.getTypesAnnotatedWith(JadeAgent.class);
         try {

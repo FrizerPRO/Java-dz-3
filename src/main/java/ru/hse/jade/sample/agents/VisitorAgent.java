@@ -10,7 +10,7 @@ import ru.hse.jade.sample.behaviour.ReceiveMessageBehaviour;
 import ru.hse.jade.sample.configuration.JadeAgent;
 
 @JadeAgent(number = 5)
-public class TestAgent extends Agent implements SetAnnotationNumber {
+public class VisitorAgent extends Agent implements SetAnnotationNumber {
 
     @Override
     protected void setup() {
@@ -20,7 +20,7 @@ public class TestAgent extends Agent implements SetAnnotationNumber {
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(getAID());
         ServiceDescription sd = new ServiceDescription();
-        sd.setType("test-squad");
+        sd.setType(AgentTypes.visitorAgent);
         sd.setName("JADE-test");
         dfd.addServices(sd);
         try {
