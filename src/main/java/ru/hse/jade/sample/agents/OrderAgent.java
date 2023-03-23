@@ -12,17 +12,23 @@ import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
 import ru.hse.jade.sample.annotation_setup.SetAnnotationNumber;
 import ru.hse.jade.sample.behaviour.ReceiveMessageBehaviour;
+import ru.hse.jade.sample.behaviour.SendMessageOnce;
 import ru.hse.jade.sample.configuration.JadeAgent;
 import ru.hse.jade.sample.gson.MyGson;
 import ru.hse.jade.sample.model.Error;
+import ru.hse.jade.sample.model.visitors_orders_list.OrderInfo;
 import ru.hse.jade.sample.model.visitors_orders_list.VisitorsOrdersList;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 @JadeAgent()
 public class OrderAgent extends Agent implements SetAnnotationNumber {
     VisitorsOrdersList visitorsOrder;
+    int counter = 0;
     AID visitorAID;
+    Map<AID, Integer> mapAgentTime = new HashMap<>();
 
     @Override
     protected void setup() {
@@ -49,32 +55,57 @@ public class OrderAgent extends Agent implements SetAnnotationNumber {
         } catch (FIPAException fe) {
             fe.printStackTrace();
         }
-
-        addBehaviour(new ReceiveMessageBehaviour());
+        createProcessAgents();
+        addBehaviour(new CreateProcessAgent(this));
     }
-    private static class CreateOrderAgent extends Behaviour {
-        public static int counter = 0;
+
+    private void createProcessAgents() {
+        for (var i : visitorsOrder.visitors_orders) {
+            ContainerController cnc = this.getContainerController();
+            try {
+                var t = cnc.createNewAgent(AgentTypes.cookerAgent + counter, CookerAgent.class.getName(),
+                        new Object[]{i});
+                t.start();
+            } catch (StaleProxyException e) {
+                new Error("Cannot create order agent", e.getMessage(),
+                        e.getLocalizedMessage());
+            }
+
+        }
+    }
+
+    private static class CreateProcessAgent extends Behaviour {
+        OrderAgent orderAgent;
+
+        public CreateProcessAgent(OrderAgent orderAgent) {
+            this.orderAgent = orderAgent;
+        }
+
         @Override
         public void action() {
+
             ACLMessage msg = myAgent.receive();
             if (msg != null) {
-                if(Objects.equals(msg.getOntology(),Ontologies.COOKING_TO_ORDER)){
+                if (Objects.equals(msg.getOntology(), Ontologies.COOKING_TO_ORDER)) {
                     String json = msg.getContent();
-                    //Создать мапу
-                    VisitorsOrdersList list = MyGson.gson.fromJson(json,VisitorsOrdersList.class);
-                    ContainerController cnc = myAgent.getContainerController();
-                    try {
-                        var t = cnc.createNewAgent(AgentTypes.orderAgent + counter,OrderAgent.class.getName(),
-                                new Object[]{list,msg.getSender()});
-                        orderAgents.add(t);
-                        t.start();
-                    } catch (StaleProxyException e) {
-                        new Error("Cannot create order agent",e.getMessage(),
-                                e.getLocalizedMessage());
+                    Integer timeToCook = MyGson.gson.fromJson(json, Integer.class);
+                    orderAgent.mapAgentTime.put(msg.getSender(), timeToCook);
+                    if(orderAgent.mapAgentTime.size() == orderAgent.visitorsOrder.visitors_orders.size()){
+                        Integer currentTotalTime = 0;
+                        for(var i: orderAgent.mapAgentTime.values()){
+                            currentTotalTime += i;
+                        }
+                        String state = OrderInfo.Status.notCooking;
+                        if(currentTotalTime > 0){
+                            state = OrderInfo.Status.cooking;
+                        }
+                        OrderInfo orderInfo = new OrderInfo(state,currentTotalTime);
+                        myAgent.addBehaviour(new SendMessageOnce(
+                                MyGson.gson.toJson(orderInfo),Ontologies.ORDER_TO_VISITOR,
+                                orderAgent.visitorAID));
                     }
-                    counter += 1;
                 }
-            }else {
+            } else {
                 block();
             }
         }
@@ -96,8 +127,9 @@ public class OrderAgent extends Agent implements SetAnnotationNumber {
         // Print out a dismissal message
         System.out.println("testAgent " + getAID().getName() + " terminating");
     }
+
     @Override
-    public void setNumber(int number){
+    public void setNumber(int number) {
         SetAnnotationNumber.super.setNumber(number);
     }
 }
