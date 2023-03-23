@@ -13,6 +13,7 @@ import jade.wrapper.StaleProxyException;
 import ru.hse.jade.sample.annotation_setup.SetAnnotationNumber;
 import ru.hse.jade.sample.configuration.JadeAgent;
 import ru.hse.jade.sample.gson.MyGson;
+import ru.hse.jade.sample.model.visitors_orders_list.VisitorsOrder;
 import ru.hse.jade.sample.model.visitors_orders_list.VisitorsOrdersList;
 import ru.hse.jade.sample.model.Error;
 import java.util.ArrayList;
@@ -50,7 +51,7 @@ public class MainAgent extends Agent implements SetAnnotationNumber {
             if (msg != null) {
                 if(Objects.equals(msg.getOntology(),Ontologies.VISITOR_TO_MAIN)){
                     String json = msg.getContent();
-                    VisitorsOrdersList list = MyGson.gson.fromJson(json,VisitorsOrdersList.class);
+                    VisitorsOrder list = MyGson.gson.fromJson(json, VisitorsOrder.class);
                     ContainerController cnc = myAgent.getContainerController();
                     try {
                         var t = cnc.createNewAgent(AgentTypes.orderAgent + counter,OrderAgent.class.getName(),
