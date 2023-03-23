@@ -9,7 +9,7 @@ import ru.hse.jade.sample.annotation_setup.SetAnnotationNumber;
 import ru.hse.jade.sample.behaviour.ReceiveMessageBehaviour;
 import ru.hse.jade.sample.configuration.JadeAgent;
 
-@JadeAgent(number = 5)
+@JadeAgent()
 public class ProcessAgent extends Agent implements SetAnnotationNumber {
 
     @Override

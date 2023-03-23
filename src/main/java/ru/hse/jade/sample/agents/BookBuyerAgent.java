@@ -90,7 +90,6 @@ public class BookBuyerAgent extends Agent {
                     messageTemplate = MessageTemplate.and(
                             MessageTemplate.MatchConversationId(CONVERSATION_ID),
                             MessageTemplate.MatchInReplyTo(cfpMessage.getReplyWith()));
-
                     step = 1;
                     break;
                 case 1:
