@@ -5,15 +5,9 @@ import jade.core.behaviours.Behaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
-import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
-import lombok.Builder;
-import ru.hse.jade.sample.agents.AgentTypes;
-import ru.hse.jade.sample.agents.Ontologies;
 import ru.hse.jade.sample.model.Error;
 import ru.hse.jade.sample.util.JsonMessage;
-
-import static ru.hse.jade.sample.gson.MyGson.gson;
 
 public class SendMessageOnce extends Behaviour {
     String message;
@@ -21,6 +15,8 @@ public class SendMessageOnce extends Behaviour {
     String agentType;
     int index;
     AID name = null;
+    boolean isSend = false;
+
     public SendMessageOnce(String message, String ontology, String agentType, int index) {
         this.message = message;
         this.ontology = ontology;
@@ -34,7 +30,6 @@ public class SendMessageOnce extends Behaviour {
         this.name = name;
     }
 
-    boolean isSend = false;
     @Override
     public void action() {
 
@@ -44,8 +39,8 @@ public class SendMessageOnce extends Behaviour {
         sd.setType(agentType);
         template.addServices(sd);
         try {
-            if(name == null){
-                DFAgentDescription[] result = DFService.search(myAgent,template);
+            if (name == null) {
+                DFAgentDescription[] result = DFService.search(myAgent, template);
                 name = result[index].getName();
             }
             cfp.addReceiver(name);
@@ -55,15 +50,16 @@ public class SendMessageOnce extends Behaviour {
             isSend = true;
         } catch (IndexOutOfBoundsException ex) {
             //ex.printStackTrace();
-        } catch (Exception ex){
+        } catch (Exception ex) {
             try {
-                throw new Error("Cant find agent",ex.getMessage(),ex.getLocalizedMessage());
+                throw new Error("Cant find agent", ex.getMessage(), ex.getLocalizedMessage());
             } catch (Error ignored) {
 
             }
         }
 
     }
+
     @Override
     public boolean done() {
         return isSend;

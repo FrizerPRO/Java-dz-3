@@ -1,6 +1,5 @@
 package ru.hse.jade.sample.agents;
 
-import com.google.gson.reflect.TypeToken;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.domain.DFService;
@@ -10,29 +9,24 @@ import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import ru.hse.jade.sample.ProcessLogger;
 import ru.hse.jade.sample.annotation_setup.SetAnnotationNumber;
-import ru.hse.jade.sample.behaviour.ReceiveMessageBehaviour;
-import ru.hse.jade.sample.behaviour.SendMessageOnce;
 import ru.hse.jade.sample.configuration.JadeAgent;
-import ru.hse.jade.sample.gson.MyGson;
 import ru.hse.jade.sample.model.agent_of_cookicng_process.CookingProcessLog;
 import ru.hse.jade.sample.model.agent_of_cookicng_process.CookingProcessOperation;
 import ru.hse.jade.sample.model.cookers_list.Cooker;
-import ru.hse.jade.sample.model.products_on_stock_list.ProductOnStockList;
 import ru.hse.jade.sample.model.techno_card.DishCard;
 
-import java.lang.reflect.Type;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static java.lang.Math.min;
 import static ru.hse.jade.sample.gson.MyGson.gson;
 
 @JadeAgent()
 public class CookerAgent extends Agent implements SetAnnotationNumber {
 
     Cooker cooker;
+
     @Override
     protected void setup() {
         System.out.println("Hello from " + getAID().getName());
@@ -59,6 +53,24 @@ public class CookerAgent extends Agent implements SetAnnotationNumber {
 
         addBehaviour(new MakeMeWait(this));
     }
+
+    @Override
+    protected void takeDown() {
+        // Deregister from the yellow pages
+        try {
+            DFService.deregister(this);
+        } catch (FIPAException fe) {
+            fe.printStackTrace();
+        }
+        // Print out a dismissal message
+        System.out.println("testAgent " + getAID().getName() + " terminating");
+    }
+
+    @Override
+    public void setNumber(int number) {
+        SetAnnotationNumber.super.setNumber(number);
+    }
+
     private static class MakeMeWait extends Behaviour {
         public static AtomicInteger counter = new AtomicInteger(0);
 
@@ -82,15 +94,15 @@ public class CookerAgent extends Agent implements SetAnnotationNumber {
                     log.proc_active = false;
                     log.proc_started = new Date();
                     double wait = 0.0;
-                    for(var i: (dishCard.operations)){
+                    for (var i : (dishCard.operations)) {
                         wait += i.oper_time;
                     }
                     cookerAgent.cooker.cook_active = true;
-                    myAgent.doWait((int)(wait*100000));
+                    myAgent.doWait((int) (wait * 100000));
                     log.proc_ended = new Date();
                     log.ord_dish = dishCard.card_id;
                     log.proc_operations = new ArrayList<>();
-                    for(var i: dishCard.operations){
+                    for (var i : dishCard.operations) {
                         var cookingOper = new CookingProcessOperation();
                         cookingOper.proc_oper = i.oper_type;
                         log.proc_operations.add(cookingOper);
@@ -107,21 +119,5 @@ public class CookerAgent extends Agent implements SetAnnotationNumber {
         public boolean done() {
             return false;
         }
-    }
-
-    @Override
-    protected void takeDown() {
-        // Deregister from the yellow pages
-        try {
-            DFService.deregister(this);
-        } catch (FIPAException fe) {
-            fe.printStackTrace();
-        }
-        // Print out a dismissal message
-        System.out.println("testAgent " + getAID().getName() + " terminating");
-    }
-    @Override
-    public void setNumber(int number){
-        SetAnnotationNumber.super.setNumber(number);
     }
 }

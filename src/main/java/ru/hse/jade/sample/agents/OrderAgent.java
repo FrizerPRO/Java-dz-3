@@ -22,15 +22,18 @@ import ru.hse.jade.sample.model.visitors_orders_list.OrderInfo;
 import ru.hse.jade.sample.model.visitors_orders_list.VisitorsOrder;
 
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.Double.valueOf;
 
 @JadeAgent()
 public class OrderAgent extends Agent implements SetAnnotationNumber {
-    VisitorsOrder visitorsOrder;
     static AtomicInteger counter = new AtomicInteger(0);
+    VisitorsOrder visitorsOrder;
     AID visitorAID;
     Map<AID, Integer> mapAgentTime = new HashMap<>();
     ArrayList<DishCard> neededDishes;
@@ -98,13 +101,30 @@ public class OrderAgent extends Agent implements SetAnnotationNumber {
 
             try {
                 var t = cnc.createNewAgent("ProcessAgent" + counter.addAndGet(1), ProcessAgent.class.getName(),
-                        new Object[]{i,getAID()});
+                        new Object[]{i, getAID()});
                 t.start();
             } catch (StaleProxyException e) {
                 new Error("Cannot create process agent", e.getMessage(),
                         e.getLocalizedMessage());
             }
         }
+    }
+
+    @Override
+    protected void takeDown() {
+        // Deregister from the yellow pages
+        try {
+            DFService.deregister(this);
+        } catch (FIPAException fe) {
+            fe.printStackTrace();
+        }
+        // Print out a dismissal message
+        System.out.println("testAgent " + getAID().getName() + " terminating");
+    }
+
+    @Override
+    public void setNumber(int number) {
+        SetAnnotationNumber.super.setNumber(number);
     }
 
     private static class SendStatusToVisitor extends Behaviour {
@@ -137,13 +157,15 @@ public class OrderAgent extends Agent implements SetAnnotationNumber {
                             orderAgent.visitorAID));
                 } else if (Objects.equals(msg.getOntology(), Ontologies.MENU_TO_ORDER)) {
                     String json = msg.getContent();
-                    orderAgent.neededDishes = MyGson.fromJSONMapper(new TypeReference<ArrayList<DishCard>>() {}, json);
+                    orderAgent.neededDishes = MyGson.fromJSONMapper(new TypeReference<ArrayList<DishCard>>() {
+                    }, json);
                     myAgent.addBehaviour(new SendMessageOnce(MyGson.gson.toJson(getNeededProducts()),
                             Ontologies.ORDER_TO_STOCK,
                             AgentTypes.stockAgent, 0));
                 } else if (Objects.equals(msg.getOntology(), Ontologies.STOCK_TO_ORDER)) {
                     String json = msg.getContent();
-                    Type type = new TypeToken<HashMap<Integer, Double>>(){}.getType();
+                    Type type = new TypeToken<HashMap<Integer, Double>>() {
+                    }.getType();
                     orderAgent.existingResources = MyGson.gson.fromJson(json, type);
                     orderAgent.createProcessAgents();
                 }
@@ -172,22 +194,5 @@ public class OrderAgent extends Agent implements SetAnnotationNumber {
         public boolean done() {
             return false;
         }
-    }
-
-    @Override
-    protected void takeDown() {
-        // Deregister from the yellow pages
-        try {
-            DFService.deregister(this);
-        } catch (FIPAException fe) {
-            fe.printStackTrace();
-        }
-        // Print out a dismissal message
-        System.out.println("testAgent " + getAID().getName() + " terminating");
-    }
-
-    @Override
-    public void setNumber(int number) {
-        SetAnnotationNumber.super.setNumber(number);
     }
 }

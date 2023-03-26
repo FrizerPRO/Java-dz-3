@@ -1,9 +1,10 @@
 {
-  "cookers": [{
-    "cook_id": 15,
-    "cook_name": "Ivanov A. S.",
-    "cook_active": false
-  },
+  "cookers": [
+    {
+      "cook_id": 15,
+      "cook_name": "Ivanov A. S.",
+      "cook_active": false
+    },
     {
       "cook_id": 16,
       "cook_name": "Petrov I. V.",

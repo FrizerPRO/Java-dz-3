@@ -1,10 +1,11 @@
 {
-  "equipment": [{
-    "equip_id": 12,
-    "equip_type": 2,
-    "equip_name": "LIDER 250",
-    "equip_active": false
-  },
+  "equipment": [
+    {
+      "equip_id": 12,
+      "equip_type": 2,
+      "equip_name": "LIDER 250",
+      "equip_active": false
+    },
     {
       "equip_id": 13,
       "equip_type": 2,

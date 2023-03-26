@@ -1,6 +1,5 @@
 package ru.hse.jade.sample.agents;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.reflect.TypeToken;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
@@ -14,10 +13,8 @@ import ru.hse.jade.sample.behaviour.SendMessageOnce;
 import ru.hse.jade.sample.configuration.JadeAgent;
 import ru.hse.jade.sample.gson.MyGson;
 import ru.hse.jade.sample.model.products_on_stock_list.ProductOnStockList;
-import ru.hse.jade.sample.model.visitors_orders_list.OrderInfo;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -54,6 +51,23 @@ public class StockAgent extends Agent implements SetAnnotationNumber {
         addBehaviour(new ResendProductListToOrder(this));
     }
 
+    @Override
+    protected void takeDown() {
+        // Deregister from the yellow pages
+        try {
+            DFService.deregister(this);
+        } catch (FIPAException fe) {
+            fe.printStackTrace();
+        }
+        // Print out a dismissal message
+        System.out.println("testAgent " + getAID().getName() + " terminating");
+    }
+
+    @Override
+    public void setNumber(int number) {
+        SetAnnotationNumber.super.setNumber(number);
+    }
+
     private static class ResendProductListToOrder extends Behaviour {
         StockAgent stockAgent;
 
@@ -67,8 +81,9 @@ public class StockAgent extends Agent implements SetAnnotationNumber {
             if (msg != null) {
                 if (Objects.equals(msg.getOntology(), Ontologies.ORDER_TO_STOCK)) {
                     String json = msg.getContent();
-                    Type type = new TypeToken<HashMap<Integer, Double>>(){}.getType();
-                    Map<Integer, Double> askedProducts = MyGson.gson.fromJson(json,type);
+                    Type type = new TypeToken<HashMap<Integer, Double>>() {
+                    }.getType();
+                    Map<Integer, Double> askedProducts = MyGson.gson.fromJson(json, type);
                     myAgent.addBehaviour(new SendMessageOnce(
                             MyGson.gson.toJson(getNeededProducts(askedProducts)),
                             Ontologies.STOCK_TO_ORDER, msg.getSender()));
@@ -87,15 +102,16 @@ public class StockAgent extends Agent implements SetAnnotationNumber {
                 existingProducts.put(i.prod_item_type, i.prod_item_quantity);
             }
             for (var i : askedProducts.keySet()) {
-                if(existingProducts.containsKey(i)){
+                if (existingProducts.containsKey(i)) {
                     res.put(i, min(askedProducts.get(i), existingProducts.get(i)));
-                } else{
+                } else {
                     res.put(i, 0.0);
                     continue;
                 }
                 for (var j : stockAgent.productOnStockList.products) {
                     if (j.prod_item_type == i) {
                         j.prod_item_quantity -= res.get(i);
+                        break;
                     }
                 }
             }
@@ -106,22 +122,5 @@ public class StockAgent extends Agent implements SetAnnotationNumber {
         public boolean done() {
             return false;
         }
-    }
-
-    @Override
-    protected void takeDown() {
-        // Deregister from the yellow pages
-        try {
-            DFService.deregister(this);
-        } catch (FIPAException fe) {
-            fe.printStackTrace();
-        }
-        // Print out a dismissal message
-        System.out.println("testAgent " + getAID().getName() + " terminating");
-    }
-
-    @Override
-    public void setNumber(int number) {
-        SetAnnotationNumber.super.setNumber(number);
     }
 }

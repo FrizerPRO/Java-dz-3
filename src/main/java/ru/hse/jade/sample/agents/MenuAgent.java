@@ -16,14 +16,13 @@ import ru.hse.jade.sample.model.techno_card.ArrayOfDishCards;
 import ru.hse.jade.sample.model.techno_card.DishCard;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 @JadeAgent()
 public class MenuAgent extends Agent implements SetAnnotationNumber {
     Menu menu;
     ArrayOfDishCards arrayOfDishCards;
+
     @Override
     protected void setup() {
         System.out.println("Hello from " + getAID().getName());
@@ -53,6 +52,24 @@ public class MenuAgent extends Agent implements SetAnnotationNumber {
 
         addBehaviour(new resendDishesToOrderAgent(this));
     }
+
+    @Override
+    protected void takeDown() {
+        // Deregister from the yellow pages
+        try {
+            DFService.deregister(this);
+        } catch (FIPAException fe) {
+            fe.printStackTrace();
+        }
+        // Print out a dismissal message
+        System.out.println("testAgent " + getAID().getName() + " terminating");
+    }
+
+    @Override
+    public void setNumber(int number) {
+        SetAnnotationNumber.super.setNumber(number);
+    }
+
     private static class resendDishesToOrderAgent extends Behaviour {
         MenuAgent menuAgent;
 
@@ -71,22 +88,22 @@ public class MenuAgent extends Agent implements SetAnnotationNumber {
                             MyGson.gson.toJson(getNeededDishes(menuList)),
                             Ontologies.MENU_TO_ORDER, msg.getSender()));
                 }
-                } else {
-                    block();
-                }
+            } else {
+                block();
+            }
         }
 
         private ArrayList<DishCard> getNeededDishes(int[] menuList) {
             ArrayList<DishCard> res = new ArrayList<>();
-            for(var i: menuList){
+            for (var i : menuList) {
                 Integer indexInDishesCard = -1;
-                for (var j: menuAgent.menu.menu_dishes){
-                    if(j.menu_dish_id == i){
+                for (var j : menuAgent.menu.menu_dishes) {
+                    if (j.menu_dish_id == i) {
                         indexInDishesCard = j.menu_dish_card;
                     }
                 }
-                for (var j: menuAgent.arrayOfDishCards.dish_cards){
-                    if(j.card_id == indexInDishesCard){
+                for (var j : menuAgent.arrayOfDishCards.dish_cards) {
+                    if (j.card_id == indexInDishesCard) {
                         res.add(j);
                     }
                 }
@@ -98,21 +115,5 @@ public class MenuAgent extends Agent implements SetAnnotationNumber {
         public boolean done() {
             return false;
         }
-    }
-
-    @Override
-    protected void takeDown() {
-        // Deregister from the yellow pages
-        try {
-            DFService.deregister(this);
-        } catch (FIPAException fe) {
-            fe.printStackTrace();
-        }
-        // Print out a dismissal message
-        System.out.println("testAgent " + getAID().getName() + " terminating");
-    }
-    @Override
-    public void setNumber(int number){
-        SetAnnotationNumber.super.setNumber(number);
     }
 }

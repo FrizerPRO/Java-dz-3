@@ -4,7 +4,7 @@ import java.util.Date;
 
 public class ProductOnStock {
     public int prod_item_id;
-    public int prod_item_type ;
+    public int prod_item_type;
     public String prod_item_name;
     public String prod_item_company;
     public String prod_item_unit;

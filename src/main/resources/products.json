@@ -13,7 +13,18 @@
     },
     {
       "prod_item_id": 172,
-      "prod_item_type ": 18,
+      "prod_item_type": 18,
+      "prod_item_name": "Princess Nuri tea in bags",
+      "prod_item_company": "ORIMI",
+      "prod_item_unit": "pc.",
+      "prod_item_quantity": 874,
+      "prod_item_cost": 1.5,
+      "prod_item_delivered": "2023-01-15T08:10:36",
+      "prod_item_valid_until": "2024-12-31T23:59:59"
+    },
+    {
+      "prod_item_id": 1721,
+      "prod_item_type": 19,
       "prod_item_name": "Princess Nuri tea in bags",
       "prod_item_company": "ORIMI",
       "prod_item_unit": "pc.",
@@ -24,7 +35,7 @@
     },
     {
       "prod_item_id": 132,
-      "prod_item_type ": 22,
+      "prod_item_type": 22,
       "prod_item_name": "Can of cola 0.33",
       "prod_item_company": "Vimm-Bill-Dann",
       "prod_item_unit": "pc.",
@@ -35,7 +46,7 @@
     },
     {
       "prod_item_id": 213,
-      "prod_item_type ": 23,
+      "prod_item_type": 23,
       "prod_item_name": "Russian sugar in sticks",
       "prod_item_company": "Russian sugar",
       "prod_item_unit": "pc.",
@@ -64,39 +75,6 @@
       "prod_item_quantity": 1032,
       "prod_item_cost": 0.45,
       "prod_item_delivered": "2023-01-12T08:12:36",
-      "prod_item_valid_until": "2026-12-31T23:59:59"
-    },
-    {
-      "prod_item _id": 139,
-      "prod_item_type": 19,
-      "prod_item_name": "Plastic stirrer",
-      "prod_item_company": "Monplast EOOD",
-      "prod_item_unit": "pc.",
-      "prod_item_quantity": 12874,
-      "prod_item_cost": 0.19,
-      "prod_item_delivered": "2023-01-12T08:10:36",
-      "prod_item_valid_until": "2026-12-31T23:59:59"
-    },
-    {
-      "prod_item _id": 139,
-      "prod_item_type": 18,
-      "prod_item_name": "Plastic stirrer",
-      "prod_item_company": "Monplast EOOD",
-      "prod_item_unit": "pc.",
-      "prod_item_quantity": 12874,
-      "prod_item_cost": 0.19,
-      "prod_item_delivered": "2023-01-12T08:10:36",
-      "prod_item_valid_until": "2026-12-31T23:59:59"
-    },
-    {
-      "prod_item _id": 139,
-      "prod_item_type": 23,
-      "prod_item_name": "Plastic stirrer",
-      "prod_item_company": "Monplast EOOD",
-      "prod_item_unit": "pc.",
-      "prod_item_quantity": 12874,
-      "prod_item_cost": 0.19,
-      "prod_item_delivered": "2023-01-12T08:10:36",
       "prod_item_valid_until": "2026-12-31T23:59:59"
     }
   ]

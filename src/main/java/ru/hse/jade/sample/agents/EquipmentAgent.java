@@ -9,11 +9,9 @@ import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import ru.hse.jade.sample.annotation_setup.SetAnnotationNumber;
 import ru.hse.jade.sample.configuration.JadeAgent;
-import ru.hse.jade.sample.model.cookers_list.Cooker;
 import ru.hse.jade.sample.model.kitchen_equipment_list.KitchenEquipment;
 import ru.hse.jade.sample.model.techno_card.DishCard;
 
-import java.util.Date;
 import java.util.Objects;
 
 import static ru.hse.jade.sample.gson.MyGson.gson;
@@ -21,6 +19,7 @@ import static ru.hse.jade.sample.gson.MyGson.gson;
 @JadeAgent()
 public class EquipmentAgent extends Agent implements SetAnnotationNumber {
     KitchenEquipment kitchenEquipment;
+
     @Override
     protected void setup() {
         System.out.println("Hello from " + getAID().getName());
@@ -47,6 +46,24 @@ public class EquipmentAgent extends Agent implements SetAnnotationNumber {
 
         addBehaviour(new MakeMeWait(this));
     }
+
+    @Override
+    protected void takeDown() {
+        // Deregister from the yellow pages
+        try {
+            DFService.deregister(this);
+        } catch (FIPAException fe) {
+            fe.printStackTrace();
+        }
+        // Print out a dismissal message
+        System.out.println("testAgent " + getAID().getName() + " terminating");
+    }
+
+    @Override
+    public void setNumber(int number) {
+        SetAnnotationNumber.super.setNumber(number);
+    }
+
     private static class MakeMeWait extends Behaviour {
         EquipmentAgent equipmentAgent;
 
@@ -62,11 +79,11 @@ public class EquipmentAgent extends Agent implements SetAnnotationNumber {
                     String json = msg.getContent();
                     DishCard dishCard = gson.fromJson(json, DishCard.class);
                     double wait = 0.0;
-                    for(var i: (dishCard.operations)){
+                    for (var i : (dishCard.operations)) {
                         wait += i.oper_time;
                     }
                     equipmentAgent.kitchenEquipment.equip_active = true;
-                    myAgent.doWait((int)(wait*100000));
+                    myAgent.doWait((int) (wait * 100000));
                     equipmentAgent.kitchenEquipment.equip_active = false;
                 }
             } else {
@@ -78,21 +95,5 @@ public class EquipmentAgent extends Agent implements SetAnnotationNumber {
         public boolean done() {
             return false;
         }
-    }
-
-    @Override
-    protected void takeDown() {
-        // Deregister from the yellow pages
-        try {
-            DFService.deregister(this);
-        } catch (FIPAException fe) {
-            fe.printStackTrace();
-        }
-        // Print out a dismissal message
-        System.out.println("testAgent " + getAID().getName() + " terminating");
-    }
-    @Override
-    public void setNumber(int number){
-        SetAnnotationNumber.super.setNumber(number);
     }
 }

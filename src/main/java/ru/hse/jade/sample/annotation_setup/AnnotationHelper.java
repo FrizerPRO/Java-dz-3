@@ -6,8 +6,8 @@ import java.lang.reflect.Method;
 import java.util.Map;
 
 public class AnnotationHelper {
-    private static final String ANNOTATIONS = "annotations";
     public static final String ANNOTATION_DATA = "annotationData";
+    private static final String ANNOTATIONS = "annotations";
 
     public static boolean isJDK7OrLower() {
         boolean jdk7OrLower = true;
@@ -20,7 +20,7 @@ public class AnnotationHelper {
         return jdk7OrLower;
     }
 
-    public static void alterAnnotationOn(Class clazzToLookFor, Class<? extends Annotation> annotationToAlter,Annotation annotationValue) {
+    public static void alterAnnotationOn(Class clazzToLookFor, Class<? extends Annotation> annotationToAlter, Annotation annotationValue) {
         if (isJDK7OrLower()) {
             try {
                 Field annotations = Class.class.getDeclaredField(ANNOTATIONS);
@@ -28,7 +28,7 @@ public class AnnotationHelper {
                 Map<Class<? extends Annotation>, Annotation> map =
                         (Map<Class<? extends Annotation>, Annotation>) annotations.get(clazzToLookFor);
                 map.put(annotationToAlter, annotationValue);
-            } catch (Exception  e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         } else {
@@ -46,7 +46,7 @@ public class AnnotationHelper {
                 Map<Class<? extends Annotation>, Annotation> map =
                         (Map<Class<? extends Annotation>, Annotation>) annotations.get(annotationData);
                 map.put(annotationToAlter, annotationValue);
-            } catch (Exception  e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

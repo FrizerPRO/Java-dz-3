@@ -1,4 +1,5 @@
 package ru.hse.jade.sample.model.techno_card;
+
 import java.util.ArrayList;
 
 public class Operation {

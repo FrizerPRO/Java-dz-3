@@ -7,16 +7,14 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
-import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
 import ru.hse.jade.sample.annotation_setup.SetAnnotationNumber;
 import ru.hse.jade.sample.configuration.JadeAgent;
 import ru.hse.jade.sample.gson.MyGson;
-import ru.hse.jade.sample.model.visitors_orders_list.VisitorsOrder;
-import ru.hse.jade.sample.model.visitors_orders_list.VisitorsOrdersList;
 import ru.hse.jade.sample.model.Error;
-import java.util.ArrayList;
+import ru.hse.jade.sample.model.visitors_orders_list.VisitorsOrder;
+
 import java.util.Objects;
 
 @JadeAgent("MainAgent")
@@ -41,37 +39,6 @@ public class MainAgent extends Agent implements SetAnnotationNumber {
         addBehaviour(new CreateOrderAgent());
     }
 
-
-    private static class CreateOrderAgent extends Behaviour {
-        public static int counter = 0;
-        @Override
-        public void action() {
-            ACLMessage msg = myAgent.receive();
-            if (msg != null) {
-                if(Objects.equals(msg.getOntology(),Ontologies.VISITOR_TO_MAIN)){
-                    String json = msg.getContent();
-                    VisitorsOrder list = MyGson.gson.fromJson(json, VisitorsOrder.class);
-                    ContainerController cnc = myAgent.getContainerController();
-                    try {
-                        var t = cnc.createNewAgent(AgentTypes.orderAgent + counter,OrderAgent.class.getName(),
-                                new Object[]{list,msg.getSender()});
-                        t.start();
-                    } catch (StaleProxyException e) {
-                        new Error("Cannot create order agent",e.getMessage(),
-                                e.getLocalizedMessage());
-                    }
-                    counter += 1;
-                }
-            }else {
-                block();
-            }
-        }
-
-        @Override
-        public boolean done() {
-            return false;
-        }
-    }
     @Override
     protected void takeDown() {
         // Deregister from the yellow pages
@@ -83,8 +50,41 @@ public class MainAgent extends Agent implements SetAnnotationNumber {
         // Print out a dismissal message
         System.out.println("testAgent " + getAID().getName() + " terminating");
     }
+
     @Override
-    public void setNumber(int number){
+    public void setNumber(int number) {
         SetAnnotationNumber.super.setNumber(number);
+    }
+
+    private static class CreateOrderAgent extends Behaviour {
+        public static int counter = 0;
+
+        @Override
+        public void action() {
+            ACLMessage msg = myAgent.receive();
+            if (msg != null) {
+                if (Objects.equals(msg.getOntology(), Ontologies.VISITOR_TO_MAIN)) {
+                    String json = msg.getContent();
+                    VisitorsOrder list = MyGson.gson.fromJson(json, VisitorsOrder.class);
+                    ContainerController cnc = myAgent.getContainerController();
+                    try {
+                        var t = cnc.createNewAgent(AgentTypes.orderAgent + counter, OrderAgent.class.getName(),
+                                new Object[]{list, msg.getSender()});
+                        t.start();
+                    } catch (StaleProxyException e) {
+                        new Error("Cannot create order agent", e.getMessage(),
+                                e.getLocalizedMessage());
+                    }
+                    counter += 1;
+                }
+            } else {
+                block();
+            }
+        }
+
+        @Override
+        public boolean done() {
+            return false;
+        }
     }
 }
