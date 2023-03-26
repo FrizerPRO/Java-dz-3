@@ -1,39 +1,36 @@
 package ru.hse.jade.sample;
 
-import jade.core.Agent;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
 import jade.core.Runtime;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
-import org.reflections.Reflections;
-import ru.hse.jade.sample.agents.TestAgent;
-import ru.hse.jade.sample.agents.VisitorAgent;
-import ru.hse.jade.sample.annotation_setup.SetAnnotationNumber;
-import ru.hse.jade.sample.configuration.JadeAgent;
+import ru.hse.jade.sample.agents.*;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.MessageFormat;
-import java.util.Objects;
-import java.util.Set;
-import com.google.gson.*;
+import java.util.HashMap;
+
 import ru.hse.jade.sample.model.Error;
+import ru.hse.jade.sample.model.cookers_list.Cooker;
+import ru.hse.jade.sample.model.cookers_list.CookersList;
+import ru.hse.jade.sample.model.kitchen_equipment_list.KitchenEquipment;
+import ru.hse.jade.sample.model.kitchen_equipment_list.KitchenEquipmentList;
+import ru.hse.jade.sample.model.menu.Menu;
+import ru.hse.jade.sample.model.products_on_stock_list.ProductOnStockList;
+import ru.hse.jade.sample.model.techno_card.ArrayOfDishCards;
+import ru.hse.jade.sample.model.visitors_orders_list.VisitorsOrder;
 import ru.hse.jade.sample.model.visitors_orders_list.VisitorsOrdersList;
 
 import static ru.hse.jade.sample.gson.MyGson.gson;
 
-class MainController {
+public class MainController {
+    public static HashMap<Cooker, String> cookersMap = new HashMap<>();
+    public static HashMap<KitchenEquipment,String> equipmentStringHashMap= new HashMap<>();
 
     private final ContainerController containerController;
     private Exception ex;
@@ -51,64 +48,25 @@ class MainController {
         new TestAgent().setNumber(2);
     }
     void initAgents() {
-        initAgents(MainController.class.getPackageName());
-    }
-
-    void initAgents(String basePackage) {
-        final Reflections reflections = new Reflections(basePackage);
-        configureAgentClasses();
-
-        final Set<Class<?>> allClasses = reflections.getTypesAnnotatedWith(JadeAgent.class);
         try {
-            for (Class<?> clazz : allClasses) {
-                if (Agent.class.isAssignableFrom(clazz)) {
-                    configureAgent(clazz);
-                }
-            }
+            createAgent(MainAgent.class, "MainAgent").start();
+            createVisitorAgent();
+            createCookerAgent();
+            createMenuAgent();
+            createStockAgent();
+            createEquipmentAgent();
         } catch (Exception e) {
-            e.printStackTrace();
+            new Error("Cant create agents",e.getMessage(),e.getLocalizedMessage());
         }
     }
 
-    private void configureAgent(Class<?> clazz) throws StaleProxyException, Error {
-        final JadeAgent jadeAgent = clazz.getAnnotation(JadeAgent.class);
 
-        if (jadeAgent.number() <= 0) {
-            throw new IllegalStateException(MessageFormat.format(
-                    "Number of agent {0} is less then 1. Real number is {1}",
-                    clazz.getName(),
-                    jadeAgent.number()
-            ));
-        }
-        final String agentName =
-                !Objects.equals(jadeAgent.value(), "")
-                        ? jadeAgent.value()
-                        : clazz.getSimpleName();
-        if (clazz.equals(VisitorAgent.class)) {
-            createVisitorAgent(clazz,agentName).start();
-            return;
-        }
-
-        if (jadeAgent.number() == 1) {
-            createAgent(clazz, agentName).start();
-        } else {
-            for (int i = 0; i < jadeAgent.number(); ++i) {
-                createAgent(
-                        clazz,
-                        MessageFormat.format(
-                                "{0}{1}",
-                                agentName,
-                                i
-                        )).start();
-            }
-        }
-    }
     private String readFileFromResources(String filename) throws URISyntaxException, IOException {
         URL resource = getClass().getClassLoader().getResource(filename);
         byte[] bytes = Files.readAllBytes(Paths.get(resource.toURI()));
         return new String(bytes);
     }
-    private AgentController createVisitorAgent(Class<?> clazz, String agentName) throws StaleProxyException, Error {
+    private void createVisitorAgent() throws StaleProxyException, Error {
         String json = "";
         try{
             json = readFileFromResources("visitors_orders.json");
@@ -120,15 +78,106 @@ class MainController {
         if(visitorsOrdersList == null){
             throw new Error("JSON-error", "visitorsOrdersList", "");
         }
-        return containerController.createNewAgent(
-                agentName,
-                clazz.getName(), new VisitorsOrdersList[]{visitorsOrdersList});
+        int counter = 0;
+        for (var i: visitorsOrdersList.visitors_orders){
+            containerController.createNewAgent(
+                    "VisitorAgent" + counter,
+                    VisitorAgent.class.getName(), new VisitorsOrder[]{i}).start();
+            counter += 1;
+        }
     }
+    private void createStockAgent() throws StaleProxyException, Error {
+        String json = "";
+        try{
+            json = readFileFromResources("products.json");
+        } catch (Exception ex){
+            this.ex = ex;
+            throw new Error("File-error", ex.getMessage(), ex.getLocalizedMessage());
+        }
+        ProductOnStockList productOnStockList = gson.fromJson(json,ProductOnStockList.class);
+        if(productOnStockList == null){
+            throw new Error("JSON-error", "stockList", "");
+        }
+            containerController.createNewAgent(
+                    "StockAgent",
+                    StockAgent.class.getName(), new ProductOnStockList[]{productOnStockList}).start();
+    }
+    private void createMenuAgent() throws StaleProxyException, Error {
+        String json = "";
+        try{
+            json = readFileFromResources("menu_dishes.json");
+        } catch (Exception ex){
+            this.ex = ex;
+            throw new Error("File-error", ex.getMessage(), ex.getLocalizedMessage());
+        }
+        Menu menu = gson.fromJson(json,Menu.class);
+        if(menu == null){
+            throw new Error("JSON-error", "menuList", "");
+        }
+        try{
+            json = readFileFromResources("dish_cards.json");
+        } catch (Exception ex){
+            this.ex = ex;
+            throw new Error("File-error", ex.getMessage(), ex.getLocalizedMessage());
+        }
+        ArrayOfDishCards dishCards = gson.fromJson(json,ArrayOfDishCards.class);
+        if(dishCards == null){
+            throw new Error("JSON-error", "dishCards", "");
+        }
+        containerController.createNewAgent(
+                "MenuAgent",
+                MenuAgent.class.getName(), new Object[]{menu,dishCards}).start();
+    }
+    private void createCookerAgent() throws StaleProxyException, Error {
+        String json = "";
+        try{
+            json = readFileFromResources("cookers.json");
+        } catch (Exception ex){
+            this.ex = ex;
+            throw new Error("File-error", ex.getMessage(), ex.getLocalizedMessage());
+        }
+        var tmpCookersList = gson.fromJson(json,CookersList.class);
+        if(tmpCookersList == null){
+            throw new Error("JSON-error", "cookersList", "");
+        }
+
+        int counter = 0;
+        for(var i: tmpCookersList.cookers){
+            var t = containerController.createNewAgent(
+                    "CookerAgent" + counter,
+                    CookerAgent.class.getName(), new Cooker[]{i});
+            cookersMap.put(i,t.getName());
+            t.start();
+            counter += 1;
+        }
+    }
+    private void createEquipmentAgent() throws StaleProxyException, Error {
+        String json = "";
+        try{
+            json = readFileFromResources("equipment.json");
+        } catch (Exception ex){
+            this.ex = ex;
+            throw new Error("File-error", ex.getMessage(), ex.getLocalizedMessage());
+        }
+        var kitchenEquipmentList = gson.fromJson(json,KitchenEquipmentList.class);
+        if(kitchenEquipmentList == null){
+            throw new Error("JSON-error", "EquipmentAgent", "");
+        }
+        int counter = 0;
+        for(var i: kitchenEquipmentList.equipment){
+            var t = containerController.createNewAgent(
+                    "EquipmentAgent" + counter,
+                    EquipmentAgent.class.getName(), new KitchenEquipment[]{i});
+            equipmentStringHashMap.put(i,t.getName());
+            t.start();
+            counter += 1;
+        }
+    }
+
     private AgentController createAgent(Class<?> clazz, String agentName) throws StaleProxyException {
         return containerController.createNewAgent(
                 agentName,
                 clazz.getName(),
                 null);
     }
-
 }

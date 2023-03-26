@@ -21,7 +21,6 @@ import java.util.Objects;
 
 @JadeAgent("MainAgent")
 public class MainAgent extends Agent implements SetAnnotationNumber {
-    static ArrayList<AgentController> orderAgents = new ArrayList<>();
     @Override
     protected void setup() {
         System.out.println("Hello from " + getAID().getName());
@@ -56,7 +55,6 @@ public class MainAgent extends Agent implements SetAnnotationNumber {
                     try {
                         var t = cnc.createNewAgent(AgentTypes.orderAgent + counter,OrderAgent.class.getName(),
                                 new Object[]{list,msg.getSender()});
-                        orderAgents.add(t);
                         t.start();
                     } catch (StaleProxyException e) {
                         new Error("Cannot create order agent",e.getMessage(),

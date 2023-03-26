@@ -37,6 +37,7 @@ public class SendMessageOnce extends Behaviour {
     boolean isSend = false;
     @Override
     public void action() {
+
         JsonMessage cfp = new JsonMessage(ACLMessage.CFP);
         DFAgentDescription template = new DFAgentDescription();
         ServiceDescription sd = new ServiceDescription();

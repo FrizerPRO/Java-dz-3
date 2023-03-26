@@ -1,5 +1,7 @@
 package ru.hse.jade.sample.agents;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.gson.reflect.TypeToken;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
@@ -20,19 +22,20 @@ import ru.hse.jade.sample.model.techno_card.DishCard;
 import ru.hse.jade.sample.model.visitors_orders_list.OrderInfo;
 import ru.hse.jade.sample.model.visitors_orders_list.VisitorsOrder;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.lang.reflect.Type;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.lang.Double.valueOf;
 
 @JadeAgent()
 public class OrderAgent extends Agent implements SetAnnotationNumber {
     VisitorsOrder visitorsOrder;
-    int counter = 0;
+    static int counter = 0;
     AID visitorAID;
     Map<AID, Integer> mapAgentTime = new HashMap<>();
-    ArrayList<DishCard> neededDishes = new ArrayList<>();
-    Map<Integer,Double> existingResources = new HashMap<>();
+    ArrayList<DishCard> neededDishes;
+    Map<Integer, Double> existingResources = new HashMap<>();
 
     @Override
     protected void setup() {
@@ -59,44 +62,48 @@ public class OrderAgent extends Agent implements SetAnnotationNumber {
         } catch (FIPAException fe) {
             fe.printStackTrace();
         }
-        createProcessAgents();
+        //createProcessAgents();
         addBehaviour(new SendStatusToVisitor(this));
         addBehaviour(new SendMessageOnce(MyGson.gson.toJson(visitorsOrder.vis_ord_dishes.stream().
-                map(e -> e.menu_dish)),
+                map(e -> e.menu_dish).toArray()),
                 Ontologies.ORDER_TO_MENU,
-                AgentTypes.menuAgent,0));
+                AgentTypes.menuAgent, 0));
     }
 
     private void createProcessAgents() {
 
         for (var i : neededDishes) {
-            var tmpExistingProducts = Map<in>//copy of existing prods
+            Map<Integer, Double> copyOfExistingProducts = new HashMap<>();
+            for (Map.Entry<Integer, Double> entry : existingResources.entrySet()) {
+                copyOfExistingProducts.put(entry.getKey(), valueOf(entry.getValue()));
+            }
+
             boolean isEnought = true;
-            for(var j: i.operations){
-                for (var k: j.oper_products) {
-                    existingResources.put(k.prod_type,existingResources.get(k.prod_type) - k.prod_quantity);
-                    if(existingResources.get(k.prod_type) < 0){
+            for (var j : i.operations) {
+                for (var k : j.oper_products) {
+                    copyOfExistingProducts.put(k.prod_type, copyOfExistingProducts.get(k.prod_type) - k.prod_quantity);
+                    if (copyOfExistingProducts.get(k.prod_type) < 0) {
                         isEnought = false;
                         break;
                     }
                 }
-                if(!isEnought){
-                    //Work with copy
-
-
+                if (!isEnought) {
                     break;
                 }
             }
-            if(!isEnought){
+            if (!isEnought) {
                 continue;
             }
+            existingResources = copyOfExistingProducts;
             ContainerController cnc = this.getContainerController();
+            counter+= 1;
+
             try {
-                var t = cnc.createNewAgent(AgentTypes.cookerAgent + counter, CookerAgent.class.getName(),
+                var t = cnc.createNewAgent("ProcessAgent" + counter, ProcessAgent.class.getName(),
                         new Object[]{i});
                 t.start();
             } catch (StaleProxyException e) {
-                new Error("Cannot create order agent", e.getMessage(),
+                new Error("Cannot create process agent", e.getMessage(),
                         e.getLocalizedMessage());
             }
         }
@@ -118,45 +125,46 @@ public class OrderAgent extends Agent implements SetAnnotationNumber {
                     String json = msg.getContent();
                     Integer timeToCook = MyGson.gson.fromJson(json, Integer.class);
                     orderAgent.mapAgentTime.put(msg.getSender(), timeToCook);
-                    if(orderAgent.mapAgentTime.size() == orderAgent.visitorsOrder.vis_ord_dishes.size()){
-                        Integer currentTotalTime = 0;
-                        for(var i: orderAgent.mapAgentTime.values()){
-                            currentTotalTime += i;
-                        }
-                        String state = OrderInfo.Status.notCooking;
-                        if(currentTotalTime > 0){
-                            state = OrderInfo.Status.cooking;
-                        }
-                        OrderInfo orderInfo = new OrderInfo(state,currentTotalTime);
-                        myAgent.addBehaviour(new SendMessageOnce(
-                                MyGson.gson.toJson(orderInfo),Ontologies.ORDER_TO_VISITOR,
-                                orderAgent.visitorAID));
+                    Integer currentTotalTime = 0;
+                    for (var i : orderAgent.mapAgentTime.values()) {
+                        currentTotalTime += i;
                     }
-                } else if(Objects.equals(msg.getOntology(), Ontologies.MENU_TO_ORDER)){
+                    String state = OrderInfo.Status.notCooking;
+                    if (currentTotalTime > 0) {
+                        state = OrderInfo.Status.cooking;
+                    }
+                    OrderInfo orderInfo = new OrderInfo(state, currentTotalTime);
+                    myAgent.addBehaviour(new SendMessageOnce(
+                            MyGson.gson.toJson(orderInfo), Ontologies.ORDER_TO_VISITOR,
+                            orderAgent.visitorAID));
+                } else if (Objects.equals(msg.getOntology(), Ontologies.MENU_TO_ORDER)) {
                     String json = msg.getContent();
-                    orderAgent.neededDishes = MyGson.gson.fromJson(json, (ArrayList.class));
+                    orderAgent.neededDishes = MyGson.fromJSONMapper(new TypeReference<ArrayList<DishCard>>() {}, json);
                     myAgent.addBehaviour(new SendMessageOnce(MyGson.gson.toJson(getNeededProducts()),
                             Ontologies.ORDER_TO_STOCK,
-                            AgentTypes.stockAgent,0));
-                } else if(Objects.equals(msg.getOntology(), Ontologies.STOCK_TO_ORDER)){
+                            AgentTypes.stockAgent, 0));
+                } else if (Objects.equals(msg.getOntology(), Ontologies.STOCK_TO_ORDER)) {
                     String json = msg.getContent();
-                    orderAgent.existingResources = MyGson.gson.fromJson(json, (Map.class));
+                    Type type = new TypeToken<HashMap<Integer, Double>>(){}.getType();
+                    orderAgent.existingResources = MyGson.gson.fromJson(json, type);
                     orderAgent.createProcessAgents();
                 }
             } else {
                 block();
             }
         }
-        private Map<Integer,Double> getNeededProducts(){
-            Map<Integer,Double> res = new HashMap<>();
-            for(var i: orderAgent.neededDishes){
-                for(var j: i.operations){
-                    for (var k: j.oper_products) {
-                        if(!res.containsKey(k.prod_type)){
+
+        private Map<Integer, Double> getNeededProducts() {
+            Map<Integer, Double> res = new HashMap<>();
+            for (var i : orderAgent.neededDishes) {
+                for (var j : i.operations) {
+                    for (var k : j.oper_products) {
+                        if (!res.containsKey(k.prod_type)) {
                             res.put(k.prod_type, k.prod_quantity);
-                        }else {
+                        } else {
                             res.put(k.prod_type, res.get(k.prod_type) + k.prod_quantity);
-                        }}
+                        }
+                    }
                 }
             }
             return res;
