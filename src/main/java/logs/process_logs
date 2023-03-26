@@ -1,0 +1,18 @@
+мар. 26, 2023 12:23:05 PM ru.hse.jade.sample.agents.CookerAgent$MakeMeWait action
+FINE: {"proc_id":0,"ord_dish":518,"proc_started":"2023-03-26T12:23:05","proc_ended":"2023-03-26T12:23:05","proc_active":false,"proc_operations":[{"proc_oper":17}]}
+мар. 26, 2023 12:23:05 PM ru.hse.jade.sample.agents.CookerAgent$MakeMeWait action
+FINE: {"proc_id":2,"ord_dish":518,"proc_started":"2023-03-26T12:23:05","proc_ended":"2023-03-26T12:23:05","proc_active":false,"proc_operations":[{"proc_oper":17}]}
+мар. 26, 2023 12:23:05 PM ru.hse.jade.sample.agents.CookerAgent$MakeMeWait action
+FINE: {"proc_id":3,"ord_dish":518,"proc_started":"2023-03-26T12:23:05","proc_ended":"2023-03-26T12:23:05","proc_active":false,"proc_operations":[{"proc_oper":17}]}
+мар. 26, 2023 12:23:05 PM ru.hse.jade.sample.agents.CookerAgent$MakeMeWait action
+FINE: {"proc_id":5,"ord_dish":518,"proc_started":"2023-03-26T12:23:05","proc_ended":"2023-03-26T12:23:05","proc_active":false,"proc_operations":[{"proc_oper":17}]}
+мар. 26, 2023 12:23:05 PM ru.hse.jade.sample.agents.CookerAgent$MakeMeWait action
+FINE: {"proc_id":6,"ord_dish":518,"proc_started":"2023-03-26T12:23:05","proc_ended":"2023-03-26T12:23:05","proc_active":false,"proc_operations":[{"proc_oper":17}]}
+мар. 26, 2023 12:23:20 PM ru.hse.jade.sample.agents.CookerAgent$MakeMeWait action
+FINE: {"proc_id":1,"ord_dish":518,"proc_started":"2023-03-26T12:23:05","proc_ended":"2023-03-26T12:23:20","proc_active":false,"proc_operations":[{"proc_oper":17}]}
+мар. 26, 2023 12:23:20 PM ru.hse.jade.sample.agents.CookerAgent$MakeMeWait action
+FINE: {"proc_id":4,"ord_dish":518,"proc_started":"2023-03-26T12:23:05","proc_ended":"2023-03-26T12:23:20","proc_active":false,"proc_operations":[{"proc_oper":17}]}
+мар. 26, 2023 12:23:20 PM ru.hse.jade.sample.agents.CookerAgent$MakeMeWait action
+FINE: {"proc_id":7,"ord_dish":518,"proc_started":"2023-03-26T12:23:05","proc_ended":"2023-03-26T12:23:20","proc_active":false,"proc_operations":[{"proc_oper":17}]}
+мар. 26, 2023 12:23:35 PM ru.hse.jade.sample.agents.CookerAgent$MakeMeWait action
+FINE: {"proc_id":8,"ord_dish":518,"proc_started":"2023-03-26T12:23:20","proc_ended":"2023-03-26T12:23:35","proc_active":false,"proc_operations":[{"proc_oper":17}]}

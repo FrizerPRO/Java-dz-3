@@ -17,7 +17,6 @@ import ru.hse.jade.sample.behaviour.SendMessageOnce;
 import ru.hse.jade.sample.configuration.JadeAgent;
 import ru.hse.jade.sample.gson.MyGson;
 import ru.hse.jade.sample.model.Error;
-import ru.hse.jade.sample.model.menu.Dish;
 import ru.hse.jade.sample.model.techno_card.DishCard;
 import ru.hse.jade.sample.model.visitors_orders_list.OrderInfo;
 import ru.hse.jade.sample.model.visitors_orders_list.VisitorsOrder;
@@ -25,7 +24,6 @@ import ru.hse.jade.sample.model.visitors_orders_list.VisitorsOrder;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import static java.lang.Double.valueOf;
 
@@ -121,7 +119,7 @@ public class OrderAgent extends Agent implements SetAnnotationNumber {
 
             ACLMessage msg = myAgent.receive();
             if (msg != null) {
-                if (Objects.equals(msg.getOntology(), Ontologies.COOKING_TO_ORDER)) {
+                if (Objects.equals(msg.getOntology(), Ontologies.PROCESS_TO_ORDER)) {
                     String json = msg.getContent();
                     Integer timeToCook = MyGson.gson.fromJson(json, Integer.class);
                     orderAgent.mapAgentTime.put(msg.getSender(), timeToCook);

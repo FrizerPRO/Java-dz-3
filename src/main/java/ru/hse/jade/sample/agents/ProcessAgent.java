@@ -54,7 +54,10 @@ public class ProcessAgent extends Agent implements SetAnnotationNumber {
     }
     private void findFreeCookerAndEquipment(){
         boolean isFound = false;
-        double wait
+        double waitTime = 0;
+        for(var i: dishCard.operations){
+            waitTime += i.oper_time;
+        }
         while(!(isFound)){
             Integer cookerCounter = 0;
             for(var cooker: MainController.cookersList.cookers){
@@ -69,7 +72,7 @@ public class ProcessAgent extends Agent implements SetAnnotationNumber {
                         isFound= true;
                         }
                         equipCounter += 1;
-                        addBehaviour(new SendMessageOnce());
+                        addBehaviour(new SendMessageOnce(gson.toJson((int) (waitTime*100)), Ontologies.PROCESS_TO_ORDER,orderAID));
                     }
                 }
                 cookerCounter += 1;
