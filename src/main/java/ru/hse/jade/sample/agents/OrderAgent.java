@@ -24,6 +24,7 @@ import ru.hse.jade.sample.model.visitors_orders_list.VisitorsOrder;
 
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static java.lang.Double.valueOf;
@@ -31,7 +32,7 @@ import static java.lang.Double.valueOf;
 @JadeAgent()
 public class OrderAgent extends Agent implements SetAnnotationNumber {
     VisitorsOrder visitorsOrder;
-    static int counter = 0;
+    static AtomicInteger counter = new AtomicInteger(0);
     AID visitorAID;
     Map<AID, Integer> mapAgentTime = new HashMap<>();
     ArrayList<DishCard> neededDishes;
@@ -96,11 +97,10 @@ public class OrderAgent extends Agent implements SetAnnotationNumber {
             }
             existingResources = copyOfExistingProducts;
             ContainerController cnc = this.getContainerController();
-            counter+= 1;
 
             try {
-                var t = cnc.createNewAgent("ProcessAgent" + counter, ProcessAgent.class.getName(),
-                        new Object[]{i});
+                var t = cnc.createNewAgent("ProcessAgent" + counter.addAndGet(1), ProcessAgent.class.getName(),
+                        new Object[]{i,getAID()});
                 t.start();
             } catch (StaleProxyException e) {
                 new Error("Cannot create process agent", e.getMessage(),

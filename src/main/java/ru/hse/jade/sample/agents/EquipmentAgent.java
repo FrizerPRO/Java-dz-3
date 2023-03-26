@@ -11,7 +11,9 @@ import ru.hse.jade.sample.annotation_setup.SetAnnotationNumber;
 import ru.hse.jade.sample.configuration.JadeAgent;
 import ru.hse.jade.sample.model.cookers_list.Cooker;
 import ru.hse.jade.sample.model.kitchen_equipment_list.KitchenEquipment;
+import ru.hse.jade.sample.model.techno_card.DishCard;
 
+import java.util.Date;
 import java.util.Objects;
 
 import static ru.hse.jade.sample.gson.MyGson.gson;
@@ -56,11 +58,15 @@ public class EquipmentAgent extends Agent implements SetAnnotationNumber {
         public void action() {
             ACLMessage msg = myAgent.receive();
             if (msg != null) {
-                if (Objects.equals(msg.getOntology(), Ontologies.PROCESS_TO_COOKER)) {
+                if (Objects.equals(msg.getOntology(), Ontologies.PROCESS_TO_EQUIP)) {
                     String json = msg.getContent();
-                    Double wait = gson.fromJson(json,Double.class);
+                    DishCard dishCard = gson.fromJson(json, DishCard.class);
+                    double wait = 0.0;
+                    for(var i: (dishCard.operations)){
+                        wait += i.oper_time;
+                    }
                     equipmentAgent.kitchenEquipment.equip_active = true;
-                    myAgent.doWait((int)(wait*100));
+                    myAgent.doWait((int)(wait*100000));
                     equipmentAgent.kitchenEquipment.equip_active = false;
                 }
             } else {

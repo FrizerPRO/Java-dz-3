@@ -8,24 +8,30 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
+import ru.hse.jade.sample.ProcessLogger;
 import ru.hse.jade.sample.annotation_setup.SetAnnotationNumber;
 import ru.hse.jade.sample.behaviour.ReceiveMessageBehaviour;
 import ru.hse.jade.sample.behaviour.SendMessageOnce;
 import ru.hse.jade.sample.configuration.JadeAgent;
 import ru.hse.jade.sample.gson.MyGson;
+import ru.hse.jade.sample.model.agent_of_cookicng_process.CookingProcessLog;
+import ru.hse.jade.sample.model.agent_of_cookicng_process.CookingProcessOperation;
 import ru.hse.jade.sample.model.cookers_list.Cooker;
 import ru.hse.jade.sample.model.products_on_stock_list.ProductOnStockList;
+import ru.hse.jade.sample.model.techno_card.DishCard;
 
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.Math.min;
 import static ru.hse.jade.sample.gson.MyGson.gson;
 
 @JadeAgent()
 public class CookerAgent extends Agent implements SetAnnotationNumber {
+
     Cooker cooker;
     @Override
     protected void setup() {
@@ -42,7 +48,7 @@ public class CookerAgent extends Agent implements SetAnnotationNumber {
         dfd.setName(getAID());
         ServiceDescription sd = new ServiceDescription();
         sd.setType(AgentTypes.cookerAgent);
-        sd.setName("JADE-test");
+        sd.setName(AgentTypes.cookerAgent);
         dfd.addServices(sd);
         try {
             DFService.register(this, dfd);
@@ -54,6 +60,8 @@ public class CookerAgent extends Agent implements SetAnnotationNumber {
         addBehaviour(new MakeMeWait(this));
     }
     private static class MakeMeWait extends Behaviour {
+        public static AtomicInteger counter = new AtomicInteger(0);
+
         CookerAgent cookerAgent;
 
         public MakeMeWait(CookerAgent cookerAgent) {
@@ -65,10 +73,29 @@ public class CookerAgent extends Agent implements SetAnnotationNumber {
             ACLMessage msg = myAgent.receive();
             if (msg != null) {
                 if (Objects.equals(msg.getOntology(), Ontologies.PROCESS_TO_COOKER)) {
+                    CookingProcessLog log = new CookingProcessLog();
+                    log.proc_id = counter.get();
+                    counter.addAndGet(1);
+
                     String json = msg.getContent();
-                    Double wait = gson.fromJson(json,Double.class);
+                    DishCard dishCard = gson.fromJson(json, DishCard.class);
+                    log.proc_active = false;
+                    log.proc_started = new Date();
+                    double wait = 0.0;
+                    for(var i: (dishCard.operations)){
+                        wait += i.oper_time;
+                    }
                     cookerAgent.cooker.cook_active = true;
-                    myAgent.doWait((int)(wait*100));
+                    myAgent.doWait((int)(wait*100000));
+                    log.proc_ended = new Date();
+                    log.ord_dish = dishCard.card_id;
+                    log.proc_operations = new ArrayList<>();
+                    for(var i: dishCard.operations){
+                        var cookingOper = new CookingProcessOperation();
+                        cookingOper.proc_oper = i.oper_type;
+                        log.proc_operations.add(cookingOper);
+                    }
+                    ProcessLogger.logger.fine(gson.toJson(log));
                     cookerAgent.cooker.cook_active = false;
                 }
             } else {

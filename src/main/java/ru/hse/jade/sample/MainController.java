@@ -13,7 +13,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
 
 import ru.hse.jade.sample.model.Error;
 import ru.hse.jade.sample.model.cookers_list.Cooker;
@@ -29,8 +28,8 @@ import ru.hse.jade.sample.model.visitors_orders_list.VisitorsOrdersList;
 import static ru.hse.jade.sample.gson.MyGson.gson;
 
 public class MainController {
-    public static HashMap<Cooker, String> cookersMap = new HashMap<>();
-    public static HashMap<KitchenEquipment,String> equipmentStringHashMap= new HashMap<>();
+    public static CookersList cookersList;
+    public static KitchenEquipmentList kitchenEquipmentList;
 
     private final ContainerController containerController;
     private Exception ex;
@@ -136,17 +135,16 @@ public class MainController {
             this.ex = ex;
             throw new Error("File-error", ex.getMessage(), ex.getLocalizedMessage());
         }
-        var tmpCookersList = gson.fromJson(json,CookersList.class);
-        if(tmpCookersList == null){
+        cookersList = gson.fromJson(json,CookersList.class);
+        if(cookersList == null){
             throw new Error("JSON-error", "cookersList", "");
         }
 
         int counter = 0;
-        for(var i: tmpCookersList.cookers){
+        for(var i: cookersList.cookers){
             var t = containerController.createNewAgent(
                     "CookerAgent" + counter,
                     CookerAgent.class.getName(), new Cooker[]{i});
-            cookersMap.put(i,t.getName());
             t.start();
             counter += 1;
         }
@@ -159,7 +157,7 @@ public class MainController {
             this.ex = ex;
             throw new Error("File-error", ex.getMessage(), ex.getLocalizedMessage());
         }
-        var kitchenEquipmentList = gson.fromJson(json,KitchenEquipmentList.class);
+        kitchenEquipmentList = gson.fromJson(json,KitchenEquipmentList.class);
         if(kitchenEquipmentList == null){
             throw new Error("JSON-error", "EquipmentAgent", "");
         }
@@ -168,7 +166,6 @@ public class MainController {
             var t = containerController.createNewAgent(
                     "EquipmentAgent" + counter,
                     EquipmentAgent.class.getName(), new KitchenEquipment[]{i});
-            equipmentStringHashMap.put(i,t.getName());
             t.start();
             counter += 1;
         }
